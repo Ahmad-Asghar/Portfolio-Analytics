@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "754307824519",
+    "project_id": "my-portfolio-analytics-689df",
+    "storage_bucket": "my-portfolio-analytics-689df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754307824519:android:92e84e11022d7146fbf122",
+        "android_client_info": {
+          "package_name": "com.ahmadasghar.portfolio.analytics"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBia1lPbd0LpXc-0MEj8myTGEzQoxNhBXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
