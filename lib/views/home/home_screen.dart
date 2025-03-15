@@ -1,6 +1,4 @@
 import 'package:animated_flip_counter/animated_flip_counter.dart';
-import 'package:grouped_list/grouped_list.dart';
-import 'package:intl/intl.dart';
 import 'package:my_portfolio_analytics/utils/app_exports.dart';
 import 'package:my_portfolio_analytics/utils/user_pref_utils.dart';
 import 'package:my_portfolio_analytics/views/home/provider/home_provider.dart';
@@ -60,8 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Consumer<HomeProvider>(
         builder: (context, provider, child) {
-          List<dynamic> sortedVisitors = List.from(provider.visitors)
-            ..sort((a, b) => b.timestamp.toDate().compareTo(a.timestamp.toDate()));
           return RefreshIndicator(
             onRefresh: () async {
               await provider.fetchVisitors(isRefreshing: true);
@@ -75,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CustomTextWidget(
-                        title: "Total Visitors Count",
+                        title: "Total Visitors",
                         color: AppColors.white,
                         fontSize: 19.sp,
                       ),
@@ -93,27 +89,49 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Expanded(
-                  child: GroupedListView<dynamic, DateTime>(
+                  child: ListView.builder(
+                    controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    elements: sortedVisitors,
-                    groupBy: (visitor) {
-                      DateTime dateTime = visitor.timestamp.toDate();
-                      return DateTime(dateTime.year, dateTime.month, dateTime.day);
-                    },
-                    groupSeparatorBuilder: (DateTime date) => Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      child: CustomTextWidget(
-                        title: DateFormat('dd MMMM yyyy').format(date),
-                        color: AppColors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    itemBuilder: (context, visitor) {
+                    itemCount: provider.isLoading
+                        ? 1
+                        : provider.visitors.length + (provider.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (provider.isLoading) {
+                        return const Center(child: CustomLoadingIndicator());
+                      }
+
+                      if (provider.errorMessage != null) {
+                        return Center(
+                          child: CustomTextWidget(
+                            title: provider.errorMessage!,
+                            color: AppColors.white,
+                          ),
+                        );
+                      }
+
+                      if (provider.visitors.isEmpty) {
+                        return Center(
+                          child: CustomTextWidget(
+                            title: "No visitors found",
+                            color: AppColors.white,
+                          ),
+                        );
+                      }
+
+                      if (index == provider.visitors.length) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: CustomLoadingIndicator(color: AppColors.primaryColor),
+                          ),
+                        );
+                      }
+
+                      final visitor = provider.visitors[index];
                       return ListTile(
                         leading: CircleAvatar(
                           child: CustomTextWidget(
-                            title: '${sortedVisitors.indexOf(visitor) + 1}',
+                            title: '${index + 1}',
                             color: AppColors.white,
                           ),
                         ),
@@ -121,7 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              constraints: BoxConstraints(maxWidth: 35.w),
+                              constraints:BoxConstraints(
+                                maxWidth: 35.w
+                              ),
                               child: CustomTextWidget(
                                 fontFamily: AppConstants.secondFontFamily,
                                 maxLines: 1,
@@ -145,12 +165,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    itemComparator: (item1, item2) =>
-                        item2.timestamp.toDate().compareTo(item1.timestamp.toDate()),
-                    order: GroupedListOrder.DESC,
-                    separator: const Divider(height: 0),
                   ),
-                )
+                ),
               ],
             ),
           );
