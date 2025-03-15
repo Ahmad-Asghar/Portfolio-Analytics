@@ -1,8 +1,11 @@
 import 'package:animated_flip_counter/animated_flip_counter.dart';
+import 'package:intl/intl.dart';
 import 'package:my_portfolio_analytics/utils/app_exports.dart';
 import 'package:my_portfolio_analytics/utils/user_pref_utils.dart';
 import 'package:my_portfolio_analytics/views/home/provider/home_provider.dart';
 import 'package:provider/provider.dart';
+
+import '../../common/models/visitor_model.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -58,6 +61,23 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Consumer<HomeProvider>(
         builder: (context, provider, child) {
+
+          Map<String, List<VisitorModel>> groupVisitorsByDate(List<VisitorModel> visitors) {
+            Map<String, List<VisitorModel>> groupedVisitors = {};
+            final dateFormatter = DateFormat("d MMMM y");
+
+            for (var visitor in visitors) {
+              DateTime visitorDate = visitor.timestamp?.toDate() ?? DateTime(2000, 1, 1);
+              String dateKey = dateFormatter.format(visitorDate);
+
+              groupedVisitors.putIfAbsent(dateKey, () => []);
+              groupedVisitors[dateKey]!.add(visitor);
+            }
+
+            return groupedVisitors;
+          }
+
+
           return RefreshIndicator(
             onRefresh: () async {
               await provider.fetchVisitors(isRefreshing: true);
@@ -72,13 +92,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       CustomTextWidget(
                         title: "Total Visitors",
+                        fontFamily: AppConstants.secondFontFamily,
                         color: AppColors.white,
-                        fontSize: 19.sp,
+                        fontSize: 20.sp,
                       ),
                       AnimatedFlipCounter(
                         textStyle: TextStyle(
                           color: AppColors.primaryColor,
-                          fontFamily: AppConstants.secondFontFamily,
                           fontSize: 22.sp,
                           fontWeight: FontWeight.bold,
                         ),
@@ -89,84 +109,90 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: provider.isLoading
-                        ? 1
-                        : provider.visitors.length + (provider.hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (provider.isLoading) {
+                  child: FutureBuilder(
+                    future: Future.value(groupVisitorsByDate(provider.visitors)),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
                         return const Center(child: CustomLoadingIndicator());
                       }
 
-                      if (provider.errorMessage != null) {
-                        return Center(
-                          child: CustomTextWidget(
-                            title: provider.errorMessage!,
-                            color: AppColors.white,
-                          ),
-                        );
-                      }
+                      Map<String, List<VisitorModel>> groupedVisitors = snapshot.data!;
+                      List<String> sectionTitles = groupedVisitors.keys.toList();
 
-                      if (provider.visitors.isEmpty) {
-                        return Center(
-                          child: CustomTextWidget(
-                            title: "No visitors found",
-                            color: AppColors.white,
-                          ),
-                        );
-                      }
+                      return ListView.builder(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: sectionTitles.length,
+                        itemBuilder: (context, sectionIndex) {
+                          String sectionTitle = sectionTitles[sectionIndex];
+                          List<VisitorModel> sectionVisitors = groupedVisitors[sectionTitle]!;
 
-                      if (index == provider.visitors.length) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: CustomLoadingIndicator(color: AppColors.primaryColor),
-                          ),
-                        );
-                      }
-
-                      final visitor = provider.visitors[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          child: CustomTextWidget(
-                            title: '${index + 1}',
-                            color: AppColors.white,
-                          ),
-                        ),
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              constraints:BoxConstraints(
-                                maxWidth: 35.w
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(vertical: 1.h),
+                                width: double.infinity,
+                                color:AppColors.white,
+                                child: Center(
+                                  child: CustomTextWidget(
+                                    fontFamily: AppConstants.secondFontFamily,
+                                    title: sectionTitle,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              child: CustomTextWidget(
-                                fontFamily: AppConstants.secondFontFamily,
-                                maxLines: 1,
-                                title: visitor.ip ?? "--- --- -- --",
-                                color: AppColors.white,
-                                fontSize: 15,
-                              ),
-                            ),
-                            CustomTextWidget(
-                              title: formatTimestamp(visitor.timestamp),
-                              color: AppColors.white,
-                              fontFamily: AppConstants.secondFontFamily,
-                              fontSize: 13,
-                            ),
-                          ],
-                        ),
-                        subtitle: CustomTextWidget(
-                          title:
-                          '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
-                          color: AppColors.primaryColor,
-                        ),
+                              ...sectionVisitors.map((visitor) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      top: BorderSide(color: AppColors.greySettingsColor)
+                                    )
+                                  ),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      child: CustomTextWidget(
+                                        title: '${provider.visitors.indexOf(visitor) + 1}',
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                    title: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          constraints: BoxConstraints(maxWidth: 35.w),
+                                          child: CustomTextWidget(
+                                            fontFamily: AppConstants.secondFontFamily,
+                                            maxLines: 1,
+                                            title: visitor.ip ?? "--- --- -- --",
+                                            color: AppColors.white,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        CustomTextWidget(
+                                          title: formatTimestamp(visitor.timestamp),
+                                          color: AppColors.white,
+                                          fontFamily: AppConstants.secondFontFamily,
+                                          fontSize: 13,
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: CustomTextWidget(
+                                      title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
+                                      color: AppColors.primaryColor,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ],
+                          );
+                        },
                       );
                     },
                   ),
                 ),
+
               ],
             ),
           );
