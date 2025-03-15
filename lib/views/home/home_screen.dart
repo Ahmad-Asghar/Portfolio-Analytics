@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: GroupedListView<dynamic, DateTime>(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    elements: sortedVisitors, // Use the sorted list
+                    elements: sortedVisitors,
                     groupBy: (visitor) {
                       DateTime dateTime = visitor.timestamp.toDate();
                       return DateTime(dateTime.year, dateTime.month, dateTime.day);
