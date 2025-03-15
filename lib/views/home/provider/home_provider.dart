@@ -45,7 +45,7 @@ class HomeProvider with ChangeNotifier {
     try {
       Query query = FirebaseFirestore.instance
           .collection('visitors')
-          .orderBy('timestamp', descending: false)
+        //  .orderBy('timestamp', descending: true)
           .limit(_perPage);
 
       QuerySnapshot snapshot = await query.get();
@@ -80,7 +80,7 @@ class HomeProvider with ChangeNotifier {
 
       Query query = FirebaseFirestore.instance
           .collection('visitors')
-          .orderBy('timestamp', descending: false)
+         // .orderBy('timestamp', descending: true)
           .startAfter([_lastDocument?.get('timestamp')]) // Ensure proper pagination
           .limit(_perPage);
 
