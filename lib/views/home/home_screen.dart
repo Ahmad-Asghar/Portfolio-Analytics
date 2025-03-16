@@ -76,8 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return groupedVisitors;
           }
-
-
           return RefreshIndicator(
             onRefresh: () async {
               await provider.fetchVisitors(isRefreshing: true);
@@ -108,6 +106,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                provider.isLoading
+                    ? SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: const Center(child: CustomLoadingIndicator()
+                    )
+                ) : provider.visitors.isEmpty
+                    ? SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Center(
+                      child: CustomTextWidget(
+                        title: "No Visitors Found",
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ) :
                 Expanded(
                   child: FutureBuilder(
                     future: Future.value(groupVisitorsByDate(provider.visitors)),
@@ -146,9 +164,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               ...sectionVisitors.map((visitor) {
                                 return Container(
                                   decoration: BoxDecoration(
-                                    border: Border(
-                                      top: BorderSide(color: AppColors.greySettingsColor)
-                                    )
+                                      border: Border(
+                                          top: BorderSide(color: AppColors.greySettingsColor)
+                                      )
                                   ),
                                   child: ListTile(
                                     leading: CircleAvatar(
