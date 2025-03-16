@@ -44,7 +44,7 @@ dependencies:
   cloud_firestore: ^5.6.5
   intl: ^0.20.2
   animated_flip_counter: ^0.3.4
-  grouped_list: ^6.0.0
+  flag: ^7.0.0
 
 dev_dependencies:
   flutter_test:

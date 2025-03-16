@@ -1,10 +1,10 @@
 import 'package:animated_flip_counter/animated_flip_counter.dart';
+import 'package:flag/flag.dart';
 import 'package:intl/intl.dart';
 import 'package:my_portfolio_analytics/utils/app_exports.dart';
 import 'package:my_portfolio_analytics/utils/user_pref_utils.dart';
 import 'package:my_portfolio_analytics/views/home/provider/home_provider.dart';
 import 'package:provider/provider.dart';
-
 import '../../common/models/visitor_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -178,9 +178,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ],
                                     ),
-                                    subtitle: CustomTextWidget(
-                                      title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
-                                      color: AppColors.primaryColor,
+                                    subtitle: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          constraints:BoxConstraints(
+                                            maxWidth:  50.w,
+                                          ),
+                                          child: CustomTextWidget(
+                                            title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
+                                            color: AppColors.primaryColor,
+                                          ),
+                                        ),
+                                        Flag.fromString(visitor.country??"null",height: 16,width: 40,)
+                                      ],
                                     ),
                                   ),
                                 );
