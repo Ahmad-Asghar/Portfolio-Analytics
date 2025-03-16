@@ -186,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             maxWidth:  50.w,
                                           ),
                                           child: CustomTextWidget(
+                                            maxLines: 2,
                                             title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
                                             color: AppColors.primaryColor,
                                           ),
