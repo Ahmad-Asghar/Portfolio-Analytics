@@ -1,5 +1,6 @@
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flag/flag.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:my_portfolio_analytics/utils/app_exports.dart';
 import 'package:my_portfolio_analytics/utils/user_pref_utils.dart';
@@ -168,49 +169,66 @@ class _HomeScreenState extends State<HomeScreen> {
                                           top: BorderSide(color: AppColors.greySettingsColor)
                                       )
                                   ),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      child: CustomTextWidget(
-                                        title: '${provider.visitors.indexOf(visitor) + 1}',
-                                        color: AppColors.white,
-                                      ),
-                                    ),
-                                    title: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  child: Slidable(
+                                    endActionPane:  ActionPane(
+                                      motion: ScrollMotion(),
                                       children: [
-                                        Container(
-                                          constraints: BoxConstraints(maxWidth: 35.w),
-                                          child: CustomTextWidget(
-                                            fontFamily: AppConstants.secondFontFamily,
-                                            maxLines: 1,
-                                            title: visitor.ip ?? "--- --- -- --",
-                                            color: AppColors.white,
-                                            fontSize: 15,
-                                          ),
+                                        SlidableAction(
+                                          flex: 1,
+                                          onPressed: (callBack){
+                                            provider.deleteVisitor(visitor.visitorId);
+                                          },
+                                          backgroundColor: AppColors.backgroundColor,
+                                          foregroundColor: AppColors.githubColor,
+                                          icon: Icons.delete,
+                                          label: 'Delete',
                                         ),
-                                        CustomTextWidget(
-                                          title: formatTimestamp(visitor.timestamp),
+                                      ],
+                                    ),
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        child: CustomTextWidget(
+                                          title: '${provider.visitors.indexOf(visitor) + 1}',
                                           color: AppColors.white,
-                                          fontFamily: AppConstants.secondFontFamily,
-                                          fontSize: 13,
                                         ),
-                                      ],
-                                    ),
-                                    subtitle: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Container(
-                                          constraints:BoxConstraints(
-                                            maxWidth:  50.w,
+                                      ),
+                                      title: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Container(
+                                            constraints: BoxConstraints(maxWidth: 35.w),
+                                            child: CustomTextWidget(
+                                              fontFamily: AppConstants.secondFontFamily,
+                                              maxLines: 1,
+                                              title: visitor.ip ?? "--- --- -- --",
+                                              color: AppColors.white,
+                                              fontSize: 15,
+                                            ),
                                           ),
-                                          child: CustomTextWidget(
-                                            maxLines: 2,
-                                            title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
-                                            color: AppColors.primaryColor,
+                                          CustomTextWidget(
+                                            title: formatTimestamp(visitor.timestamp),
+                                            color: AppColors.white,
+                                            fontFamily: AppConstants.secondFontFamily,
+                                            fontSize: 13,
                                           ),
-                                        ),
-                                        Flag.fromString(visitor.country??"null",height: 16,width: 40,)
-                                      ],
+                                        ],
+                                      ),
+                                      subtitle: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Container(
+                                            constraints:BoxConstraints(
+                                              maxWidth:  50.w,
+                                            ),
+                                            child: CustomTextWidget(
+                                              maxLines: 2,
+                                              title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
+                                              color: AppColors.primaryColor,
+                                            ),
+                                          ),
+                                          Flag.fromString(visitor.country??"null",height: 16,width: 40,)
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );

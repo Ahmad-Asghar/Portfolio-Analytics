@@ -8,9 +8,9 @@ class HomeProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isFetchingMore = false;
   String? _errorMessage;
-  DocumentSnapshot? _lastDocument; // Track last document for pagination
-  bool _hasMore = true; // To check if more data is available
-  static const int _perPage = 15; // Items per page
+  DocumentSnapshot? _lastDocument;
+  bool _hasMore = true;
+  static const int _perPage = 15;
 
   List<VisitorModel> get visitors => _visitors;
   int get totalVisitors => _totalVisitors;
@@ -51,14 +51,14 @@ class HomeProvider with ChangeNotifier {
       QuerySnapshot snapshot = await query.get();
 
       _visitors = snapshot.docs
-          .map((doc) => VisitorModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map((doc) => VisitorModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
 
       if (snapshot.docs.isNotEmpty) {
-        _lastDocument = snapshot.docs.last; // Store last document for pagination
+        _lastDocument = snapshot.docs.last;
       }
 
-      _hasMore = snapshot.docs.length == _perPage; // If less than perPage, no more data
+      _hasMore = snapshot.docs.length == _perPage;
     } catch (e) {
       _errorMessage = 'Error fetching visitors: $e';
     }
@@ -68,46 +68,54 @@ class HomeProvider with ChangeNotifier {
   }
 
   Future<void> fetchMoreVisitors() async {
-    debugPrint("Fetch more visitors called...");
     if (!_hasMore || _isFetchingMore) return;
-    if (_lastDocument == null && _visitors.isNotEmpty) return; // Avoids stopping the first load
+    if (_lastDocument == null && _visitors.isNotEmpty) return;
 
     _isFetchingMore = true;
     notifyListeners();
 
     try {
-      debugPrint("Fetching more visitors...");
-
       Query query = FirebaseFirestore.instance
           .collection('visitors')
           .orderBy('timestamp', descending: true)
-          .startAfter([_lastDocument?.get('timestamp')]) // Ensure proper pagination
+          .startAfter([_lastDocument?.get('timestamp')])
           .limit(_perPage);
 
       QuerySnapshot snapshot = await query.get();
-      debugPrint("More Visitors Fetched: ${snapshot.docs.length}");
 
       List<VisitorModel> moreVisitors = snapshot.docs
-          .map((doc) => VisitorModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map((doc) => VisitorModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
 
       if (moreVisitors.isNotEmpty) {
         _visitors.addAll(moreVisitors);
-        _lastDocument = snapshot.docs.last; // Update last document
-        debugPrint("Last document updated: ${_lastDocument!.id}");
+        _lastDocument = snapshot.docs.last;
       }
 
-      // Check if there are still more documents to fetch
       _hasMore = snapshot.docs.isNotEmpty && snapshot.docs.length >= _perPage;
     } catch (e) {
       _errorMessage = 'Error fetching more visitors: $e';
-      debugPrint(_errorMessage);
-      notifyListeners(); // Notify about the error
     } finally {
       _isFetchingMore = false;
       notifyListeners();
     }
   }
 
+  Future<void> deleteVisitor(String visitorId) async {
+    try {
+      await FirebaseFirestore.instance.collection('visitors').doc(visitorId).delete();
+
+      // Remove the deleted visitor from the list
+      _visitors.removeWhere((visitor) => visitor.visitorId == visitorId);
+
+      // Update total count
+      _totalVisitors--;
+
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Error deleting visitor: $e';
+      notifyListeners();
+    }
+  }
 
 }
