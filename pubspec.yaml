@@ -46,6 +46,8 @@ dependencies:
   animated_flip_counter: ^0.3.4
   flag: ^7.0.0
   flutter_slidable:
+  firebase_messaging: ^15.2.4
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:

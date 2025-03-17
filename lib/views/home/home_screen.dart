@@ -16,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late ScrollController _scrollController;
 
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final provider = Provider.of<HomeProvider>(context, listen: false);
       provider.fetchVisitors();
       provider.fetchTotalCount();
+      provider.setFcmToken();
+      handleNotifications();
     });
   }
 
@@ -37,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
       provider.fetchMoreVisitors();
     }
   }
+
+
 
   @override
   void dispose() {
