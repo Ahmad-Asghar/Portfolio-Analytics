@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class VisitorModel {
+  final String visitorId; // New field for document ID
   final String? ip;
   final String? city;
   final String? region;
@@ -13,6 +14,7 @@ class VisitorModel {
   final Timestamp? timestamp;
 
   VisitorModel({
+    required this.visitorId, // Make it required
     this.ip,
     this.city,
     this.region,
@@ -26,8 +28,9 @@ class VisitorModel {
   });
 
   // Convert JSON to Model
-  factory VisitorModel.fromJson(Map<String, dynamic> json) {
+  factory VisitorModel.fromJson(Map<String, dynamic> json, String id) {
     return VisitorModel(
+      visitorId: id, // Assign Firestore document ID
       ip: json['ip'] as String?,
       city: json['city'] as String?,
       region: json['region'] as String?,
@@ -37,7 +40,7 @@ class VisitorModel {
       postal: json['postal'] as String?,
       timezone: json['timezone'] as String?,
       readme: json['readme'] as String?,
-      timestamp: json['timestamp'] as Timestamp,
+      timestamp: json['timestamp'] as Timestamp?,
     );
   }
 
