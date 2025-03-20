@@ -157,12 +157,12 @@ class HomeProvider with ChangeNotifier {
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (message.data.containsKey('type')) {
-    String type = message.data['type'];
+  // if (message.data.containsKey('type')) {
+  //   String type = message.data['type'];
     print('background push notification data:${message.data}');
     print('background push notification data:${message.notification?.body}');
   }
-}
+//}
 
 
 handleNotifications()async{
