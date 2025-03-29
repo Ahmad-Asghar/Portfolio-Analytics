@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_portfolio_analytics/common/models/contact_messages_model.dart';
 import '../../../common/models/visitor_model.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
 import '../../../main.dart';
 
 
@@ -41,7 +40,6 @@ class HomeProvider with ChangeNotifier {
 
   String? _fcmToken;
 
-  /// Fetch total count separately without loading all documents
   Future<void> fetchTotalCount() async {
     try {
       AggregateQuerySnapshot visitorsCountSnapshot = await FirebaseFirestore.instance.collection('visitors').count().get();
@@ -56,7 +54,6 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  /// Fetch initial 15 visitors
   Future<void> fetchVisitors({bool isRefreshing = false}) async {
     if (!isRefreshing) {
       _isLoading = true;
@@ -139,7 +136,7 @@ class HomeProvider with ChangeNotifier {
       QuerySnapshot snapshot = await query.get();
 
       _contactMessages = snapshot.docs
-          .map((doc) => ContactMessagesModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map((doc) => ContactMessagesModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
 
       if (snapshot.docs.isNotEmpty) {
@@ -172,7 +169,7 @@ class HomeProvider with ChangeNotifier {
       QuerySnapshot snapshot = await query.get();
 
       List<ContactMessagesModel> moreMessages = snapshot.docs
-          .map((doc) => ContactMessagesModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map((doc) => ContactMessagesModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
 
       if (moreMessages.isNotEmpty) {
@@ -202,6 +199,23 @@ class HomeProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Error deleting visitor: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteContactMessage(String visitorId) async {
+    try {
+      await FirebaseFirestore.instance.collection('contactMessages').doc(visitorId).delete();
+
+      // Remove the deleted visitor from the list
+      _contactMessages.removeWhere((visitor) => visitor.visitorId == visitorId);
+
+      // Update total count
+      _totalMessages--;
+
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Error deleting message: $e';
       notifyListeners();
     }
   }
