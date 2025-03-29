@@ -193,7 +193,7 @@ class _ContactMessagesScreenState extends State<ContactMessagesScreen> {
                                         SlidableAction(
                                           flex: 1,
                                           onPressed: (callBack){
-                                         //   provider.deleteVisitor(visitor.visitorId);
+                                            provider.deleteContactMessage(visitor.visitorId);
                                           },
                                           backgroundColor: AppColors.backgroundColor,
                                           foregroundColor: AppColors.githubColor,

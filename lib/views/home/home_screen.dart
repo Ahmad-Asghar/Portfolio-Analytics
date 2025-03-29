@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.backgroundColor,
         surfaceTintColor: Colors.transparent,
         leading: Padding(
-          padding: const EdgeInsets.all(9.0),
+          padding: const EdgeInsets.all(12),
           child: Image.asset(Images.logo),
         ),
         title: CustomTextWidget(
@@ -78,10 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 3.0),
                       margin: const EdgeInsets.symmetric(horizontal: 6.0),
                       decoration:BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius: BorderRadius.circular(30),
                         color: AppColors.primaryColor
                       ),
-                      child: CustomTextWidget(title: provider.totalMessages.toString(),color: AppColors.white,))
+                      child: CustomTextWidget(title: provider.totalMessages.toString(),color: AppColors.backgroundColor,fontWeight: FontWeight.w600))
                 ],
               );
             }
