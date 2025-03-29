@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_portfolio_analytics/common/models/contact_messages_model.dart';
 import '../../../common/models/visitor_model.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -9,20 +10,29 @@ import '../../../main.dart';
 
 class HomeProvider with ChangeNotifier {
   List<VisitorModel> _visitors = [];
+  List<ContactMessagesModel> _contactMessages = [];
   int _totalVisitors = 0;
   int _totalMessages = 0;
   bool _isLoading = false;
+  bool _isLoadingMessages = false;
   bool _isFetchingMore = false;
+  bool _isFetchingMoreMessages = false;
   String? _errorMessage;
   DocumentSnapshot? _lastDocument;
+  DocumentSnapshot? _lastContactDocument;
   bool _hasMore = true;
+  bool _hasMoreMessages = true;
   static const int _perPage = 15;
 
   List<VisitorModel> get visitors => _visitors;
+  List<ContactMessagesModel> get contactMessages => _contactMessages;
   int get totalVisitors => _totalVisitors;
   int get totalMessages => _totalMessages;
   bool get isLoading => _isLoading;
+  bool get isLoadingMessages => _isLoadingMessages;
+  bool get hasMoreMessages => _hasMoreMessages;
   bool get isFetchingMore => _isFetchingMore;
+  bool get isFetchingMoreMessages => _isFetchingMoreMessages;
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
 
@@ -35,8 +45,9 @@ class HomeProvider with ChangeNotifier {
   Future<void> fetchTotalCount() async {
     try {
       AggregateQuerySnapshot visitorsCountSnapshot = await FirebaseFirestore.instance.collection('visitors').count().get();
-      AggregateQuerySnapshot messagesCountSnapshot = await FirebaseFirestore.instance.collection('contactMessages').count().get();
       _totalVisitors = visitorsCountSnapshot.count??0;
+      notifyListeners();
+      AggregateQuerySnapshot messagesCountSnapshot = await FirebaseFirestore.instance.collection('contactMessages').count().get();
       _totalMessages = messagesCountSnapshot.count??0;
       notifyListeners();
     } catch (e) {
@@ -112,6 +123,72 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  Future<void> fetchMessages({bool isRefreshing = false}) async {
+    if (!isRefreshing) {
+      _isLoadingMessages = true;
+      _errorMessage = null;
+      notifyListeners();
+    }
+
+    try {
+      Query query = _firestore
+          .collection('contactMessages')
+          .orderBy('timestamp', descending: true)
+          .limit(_perPage);
+
+      QuerySnapshot snapshot = await query.get();
+
+      _contactMessages = snapshot.docs
+          .map((doc) => ContactMessagesModel.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      if (snapshot.docs.isNotEmpty) {
+        _lastContactDocument = snapshot.docs.last;
+      }
+
+      _hasMoreMessages = snapshot.docs.length == _perPage;
+    } catch (e) {
+      _errorMessage = 'Error fetching messages: $e';
+    }
+
+    _isLoadingMessages = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchMoreMessages() async {
+    if (!_hasMoreMessages || _isFetchingMoreMessages) return;
+    if (_lastContactDocument == null && _contactMessages.isNotEmpty) return;
+
+    _isFetchingMoreMessages = true;
+    notifyListeners();
+
+    try {
+      Query query = _firestore
+          .collection('contactMessages')
+          .orderBy('timestamp', descending: true)
+          .startAfter([_lastContactDocument?.get('timestamp')])
+          .limit(_perPage);
+
+      QuerySnapshot snapshot = await query.get();
+
+      List<ContactMessagesModel> moreMessages = snapshot.docs
+          .map((doc) => ContactMessagesModel.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      if (moreMessages.isNotEmpty) {
+        _contactMessages.addAll(moreMessages);
+        _lastContactDocument = snapshot.docs.last;
+      }
+
+      _hasMoreMessages = snapshot.docs.isNotEmpty && snapshot.docs.length >= _perPage;
+    } catch (e) {
+      _errorMessage = 'Error fetching more messages: $e';
+    } finally {
+      _isFetchingMoreMessages = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> deleteVisitor(String visitorId) async {
     try {
       await FirebaseFirestore.instance.collection('visitors').doc(visitorId).delete();
@@ -164,7 +241,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     print('background push notification data:${message.notification?.body}');
   }
 //}
-
 
 handleNotifications()async{
   InitializationSettings initSettings =const  InitializationSettings(

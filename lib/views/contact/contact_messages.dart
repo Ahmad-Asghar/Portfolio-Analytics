@@ -6,14 +6,15 @@ import 'package:my_portfolio_analytics/utils/app_exports.dart';
 import 'package:my_portfolio_analytics/utils/user_pref_utils.dart';
 import 'package:my_portfolio_analytics/views/home/provider/home_provider.dart';
 import 'package:provider/provider.dart';
+import '../../common/models/contact_messages_model.dart';
 import '../../common/models/visitor_model.dart';
 
-class HomeScreen extends StatefulWidget {
+class ContactMessagesScreen extends StatefulWidget {
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _ContactMessagesScreenState createState() => _ContactMessagesScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _ContactMessagesScreenState extends State<ContactMessagesScreen> {
   late ScrollController _scrollController;
 
 
@@ -21,24 +22,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController()..addListener(_onScroll);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<HomeProvider>(context, listen: false);
-      provider.fetchVisitors();
-      provider.fetchTotalCount();
-      provider.fetchMessages();
-      provider.setFcmToken();
-      handleNotifications();
-    });
   }
 
   void _onScroll() {
     final provider = Provider.of<HomeProvider>(context, listen: false);
-
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent &&
-        provider.hasMore &&
-        !provider.isFetchingMore) {
-      provider.fetchMoreVisitors();
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent && provider.hasMoreMessages && !provider.isFetchingMoreMessages) {
+      provider.fetchMoreMessages();
     }
   }
 
@@ -54,45 +43,45 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.backgroundColor,
         surfaceTintColor: Colors.transparent,
-        leading: Padding(
-          padding: const EdgeInsets.all(9.0),
-          child: Image.asset(Images.logo),
-        ),
+        // leading: Padding(
+        //   padding: const EdgeInsets.all(9.0),
+        //   child: Image.asset(Images.logo),
+        // ),
+        centerTitle: true,
         title: CustomTextWidget(
-          title: "${getGreeting()} Ahmad,",
+          title: "Messages",
           color: AppColors.white,
           fontSize: 19.sp,
         ),
-        actions: [
-          Consumer<HomeProvider>(
-              builder: (context, provider, child) {
-              return Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  IconButton(onPressed: (){
-                    NavigationService().push(AppRoutes.contactMessagesPage);
-                  }, icon: Icon(Icons.message_rounded,color: AppColors.white,)),
-                  Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 3.0),
-                      margin: const EdgeInsets.symmetric(horizontal: 6.0),
-                      decoration:BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: AppColors.primaryColor
-                      ),
-                      child: CustomTextWidget(title: provider.totalMessages.toString(),color: AppColors.white,))
-                ],
-              );
-            }
-          )
-        ],
+        // actions: [
+        //   Consumer<HomeProvider>(
+        //       builder: (context, provider, child) {
+        //         return Stack(
+        //           alignment: Alignment.topRight,
+        //           children: [
+        //             IconButton(onPressed: (){}, icon: Icon(Icons.message_rounded,color: AppColors.white,)),
+        //             Container(
+        //                 padding: const EdgeInsets.symmetric(horizontal: 3.0),
+        //                 margin: const EdgeInsets.symmetric(horizontal: 6.0),
+        //                 decoration:BoxDecoration(
+        //                     borderRadius: BorderRadius.circular(5),
+        //                     color: AppColors.primaryColor
+        //                 ),
+        //                 child: CustomTextWidget(title: provider.totalMessages.toString(),color: AppColors.white,))
+        //           ],
+        //         );
+        //       }
+        //   )
+        // ],
       ),
       body: Consumer<HomeProvider>(
         builder: (context, provider, child) {
 
-          Map<String, List<VisitorModel>> groupVisitorsByDate(List<VisitorModel> visitors) {
-            Map<String, List<VisitorModel>> groupedVisitors = {};
+          Map<String, List<ContactMessagesModel>> groupVisitorsByDate(List<ContactMessagesModel> visitors) {
+            Map<String, List<ContactMessagesModel>> groupedVisitors = {};
             final dateFormatter = DateFormat("d MMMM y");
 
             for (var visitor in visitors) {
@@ -107,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           return RefreshIndicator(
             onRefresh: () async {
-              await provider.fetchVisitors(isRefreshing: true);
+              await provider.fetchMessages(isRefreshing: true);
               await provider.fetchTotalCount();
             },
             child: Column(
@@ -118,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CustomTextWidget(
-                        title: "Total Visitors",
+                        title: "Total Messages",
                         fontFamily: AppConstants.secondFontFamily,
                         color: AppColors.white,
                         fontSize: 20.sp,
@@ -130,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                         duration: const Duration(milliseconds: 500),
-                        value: provider.totalVisitors,
+                        value: provider.totalMessages,
                       ),
                     ],
                   ),
@@ -140,14 +129,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: MediaQuery.of(context).size.height * 0.7,
                     child: const Center(child: CustomLoadingIndicator()
                     )
-                ) : provider.visitors.isEmpty
+                ) : provider.contactMessages.isEmpty
                     ? SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: SizedBox(
                     height: MediaQuery.of(context).size.height * 0.7,
                     child: Center(
                       child: CustomTextWidget(
-                        title: "No Visitors Found",
+                        title: "No Messages Found",
                         fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColors.white,
@@ -157,13 +146,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ) :
                 Expanded(
                   child: FutureBuilder(
-                    future: Future.value(groupVisitorsByDate(provider.visitors)),
+                    future: Future.value(groupVisitorsByDate(provider.contactMessages)),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return const Center(child: CustomLoadingIndicator());
                       }
 
-                      Map<String, List<VisitorModel>> groupedVisitors = snapshot.data!;
+                      Map<String, List<ContactMessagesModel>> groupedVisitors = snapshot.data!;
                       List<String> sectionTitles = groupedVisitors.keys.toList();
 
                       return ListView.builder(
@@ -172,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: sectionTitles.length,
                         itemBuilder: (context, sectionIndex) {
                           String sectionTitle = sectionTitles[sectionIndex];
-                          List<VisitorModel> sectionVisitors = groupedVisitors[sectionTitle]!;
+                          List<ContactMessagesModel> sectionVisitors = groupedVisitors[sectionTitle]!;
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         SlidableAction(
                                           flex: 1,
                                           onPressed: (callBack){
-                                            provider.deleteVisitor(visitor.visitorId);
+                                         //   provider.deleteVisitor(visitor.visitorId);
                                           },
                                           backgroundColor: AppColors.backgroundColor,
                                           foregroundColor: AppColors.githubColor,
@@ -216,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: ListTile(
                                       leading: CircleAvatar(
                                         child: CustomTextWidget(
-                                          title: '${provider.visitors.indexOf(visitor) + 1}',
+                                          title: '${provider.contactMessages.indexOf(visitor) + 1}',
                                           color: AppColors.white,
                                         ),
                                       ),
@@ -228,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             child: CustomTextWidget(
                                               fontFamily: AppConstants.secondFontFamily,
                                               maxLines: 1,
-                                              title: visitor.ip ?? "--- --- -- --",
+                                              title: visitor.name.toString(),
                                               color: AppColors.white,
                                               fontSize: 15,
                                             ),
@@ -241,20 +230,40 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                         ],
                                       ),
-                                      subtitle: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Container(
-                                            constraints:BoxConstraints(
-                                              maxWidth:  50.w,
-                                            ),
-                                            child: CustomTextWidget(
-                                              maxLines: 2,
-                                              title: '${visitor.city ?? "--"}, ${visitor.region ?? "--"}, ${visitor.country ?? "--"}',
-                                              color: AppColors.primaryColor,
-                                            ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                constraints:BoxConstraints(
+                                                  maxWidth:  50.w,
+                                                ),
+                                                child: CustomTextWidget(
+                                                  maxLines: 2,
+                                                  title: visitor.email.toString(),
+                                                  color: AppColors.primaryColor,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () {
+                                                  Clipboard.setData(ClipboardData(text: visitor.email.toString()));
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text("Email copied to clipboard\n${visitor.email.toString()}"),
+                                                      duration: const Duration(seconds: 2),
+                                                      behavior: SnackBarBehavior.floating,
+                                                    ),
+                                                  );
+                                                },
+                                                child: Icon(Icons.copy, color: AppColors.white, size: 17),
+                                              ),
+                                            ],
                                           ),
-                                          Flag.fromString(visitor.country??"null",height: 16,width: 40,)
+                                          const SizedBox(height: 2),
+                                          CustomTextWidget(title: visitor.message.toString(),color: AppColors.white,textAlign: TextAlign.start)
                                         ],
                                       ),
                                     ),
