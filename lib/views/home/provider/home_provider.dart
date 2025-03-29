@@ -10,6 +10,7 @@ import '../../../main.dart';
 class HomeProvider with ChangeNotifier {
   List<VisitorModel> _visitors = [];
   int _totalVisitors = 0;
+  int _totalMessages = 0;
   bool _isLoading = false;
   bool _isFetchingMore = false;
   String? _errorMessage;
@@ -19,6 +20,7 @@ class HomeProvider with ChangeNotifier {
 
   List<VisitorModel> get visitors => _visitors;
   int get totalVisitors => _totalVisitors;
+  int get totalMessages => _totalMessages;
   bool get isLoading => _isLoading;
   bool get isFetchingMore => _isFetchingMore;
   bool get hasMore => _hasMore;
@@ -32,11 +34,10 @@ class HomeProvider with ChangeNotifier {
   /// Fetch total count separately without loading all documents
   Future<void> fetchTotalCount() async {
     try {
-      AggregateQuerySnapshot countSnapshot = await FirebaseFirestore.instance
-          .collection('visitors')
-          .count()
-          .get();
-      _totalVisitors = countSnapshot.count??0;
+      AggregateQuerySnapshot visitorsCountSnapshot = await FirebaseFirestore.instance.collection('visitors').count().get();
+      AggregateQuerySnapshot messagesCountSnapshot = await FirebaseFirestore.instance.collection('contactMessages').count().get();
+      _totalVisitors = visitorsCountSnapshot.count??0;
+      _totalMessages = messagesCountSnapshot.count??0;
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Error fetching total count: $e';

@@ -64,6 +64,26 @@ class _HomeScreenState extends State<HomeScreen> {
           color: AppColors.white,
           fontSize: 19.sp,
         ),
+        actions: [
+          Consumer<HomeProvider>(
+              builder: (context, provider, child) {
+              return Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  IconButton(onPressed: (){}, icon: Icon(Icons.message_rounded,color: AppColors.white,)),
+                  Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                      margin: const EdgeInsets.symmetric(horizontal: 6.0),
+                      decoration:BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: AppColors.primaryColor
+                      ),
+                      child: CustomTextWidget(title: provider.totalMessages.toString(),color: AppColors.white,))
+                ],
+              );
+            }
+          )
+        ],
       ),
       body: Consumer<HomeProvider>(
         builder: (context, provider, child) {
